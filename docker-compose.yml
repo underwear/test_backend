@@ -1,0 +1,50 @@
+version: '2'
+services:
+  php:
+    build: ./docker/php
+    container_name: project_php
+    volumes:
+      - ./:/opt/project
+      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/php.ini:ro
+    environment:
+      - "APP_NAME=project"
+      - "APP_ENV=local"
+      - "APP_KEY=base64:lUu9q9bs/N7nQlj5k6xHP/0sulgS5XGLPTPqZgG6z4E="
+      - "MAIL_DRIVER=smtp"
+      - "MAIL_HOST=localhost"
+      - "MAIL_PORT=1025"
+      - "DB_CONNECTION=pgsql"
+      - "DB_HOST=db"
+      - "DB_PORT=5432"
+      - "DB_DATABASE=project"
+      - "DB_USERNAME=project"
+      - "DB_PASSWORD=project"
+      - "PHP_IDE_CONFIG=serverName=php"
+      - "APP_URL=http://127.0.0.1:8090"
+    depends_on:
+      - db
+
+  nginx:
+    build: ./docker/nginx
+    container_name: project_web
+    depends_on:
+      - php
+    ports:
+      - 8090:80
+    volumes:
+      - ./public:/opt/project/public:ro,cached
+
+  db:
+    image: postgres:9.6.6
+    ports:
+      - 5433:5432
+    volumes:
+      - db_project:/var/lib/postgresql/data
+    container_name: project_db
+    environment:
+      POSTGRES_PASSWORD: project
+      POSTGRES_USER: project
+
+volumes:
+  db_project:
